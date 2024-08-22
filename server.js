@@ -1,16 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+require('dotenv').config(); // Load environment variables
+
 const app = express();
 
-const uri =
-  "mongodb+srv://dpshetty:%40Dpshetty852@portfoliouserscluster.20jvvn0.mongodb.net/userData?retryWrites=true&w=majority";
-
-// Connect to MongoDB Atlas
-mongoose
-  .connect(uri)
-  .then(() => console.log("Connected to MongoDB Atlas"))
-  .catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
+// MongoDB Atlas connection string from environment variables
+const uri = process.env.MONGODB_URI;
 
 // Define the user schema and model
 const { Schema, model } = mongoose;
@@ -28,6 +24,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Connect to MongoDB Atlas
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("Connected to MongoDB Atlas"))
+.catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
+
 // Routes
 app.get("/", (req, res) => {
   res.send("Server is responding");
@@ -42,7 +46,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-app.post('/users', async (req, res) => {
+app.post("/users", async (req, res) => {
   const { name, email, role, comments } = req.body;
   try {
     const newUser = new User({ name, email, role, comments });
@@ -53,7 +57,13 @@ app.post('/users', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(8055, () => {
-  console.log("Server is running on port 8055");
-});
+// Export the Express app as a Vercel serverless function
+module.exports = (req, res) => {
+  if (mongoose.connection.readyState === 0) {
+    mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+  }
+  return app(req, res);
+};
