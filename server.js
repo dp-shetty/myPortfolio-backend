@@ -11,10 +11,10 @@ const uri = process.env.MONGODB_URI;
 // Define the user schema and model
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
-  username: { type: String, required: true },
-  useremail: { type: String, required: true, unique: true },
+  username: { type: String,},
+  useremail: { type: String,unique: true },
   comments: { type: String },
-  userrole: { type: String, required: true }
+  userrole: { type: String,}
 });
 
 const User = model("User", userSchema, "users");
