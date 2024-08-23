@@ -12,7 +12,7 @@ const uri = process.env.MONGODB_URI;
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
   username: { type: String,},
-  useremail: { type: String,unique: true },
+  useremail: { type: String,},
   comments: { type: String },
   userrole: { type: String,}
 });
