@@ -25,12 +25,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB Atlas
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("Connected to MongoDB Atlas"))
-.catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
+// Connect to MongoDB Atlas
+mongoose.connect(uri)
+  .then(() => console.log("Connected to MongoDB Atlas"))
+  .catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
+
 
 // Routes
 app.get("/", (req, res) => {
@@ -52,10 +51,13 @@ app.post("/users", async (req, res) => {
     const newUser = new User({ name, email, role, comments });
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);
+    console.log(savedUser)
   } catch (err) {
+    console.error("Error saving user:", err);  // Log the error
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // Export the Express app as a Vercel serverless function
 module.exports = (req, res) => {
