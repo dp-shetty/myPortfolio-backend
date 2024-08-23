@@ -11,10 +11,10 @@ const uri = process.env.MONGODB_URI;
 // Define the user schema and model
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
-  username: { type: String,},
-  useremail: { type: String,},
+  username: { type: String },
+  useremail: { type: String },
   comments: { type: String },
-  userrole: { type: String,}
+  userrole: { type: String }
 });
 
 const User = model("User", userSchema, "users");
@@ -54,12 +54,6 @@ app.post("/users", async (req, res) => {
   }
 
   try {
-    // Check if the email already exists
-    const existingUser = await User.findOne({ useremail });
-    if (existingUser) {
-      return res.status(400).json({ message: "User with this email already exists." });
-    }
-
     // Create a new user and save to database
     const newUser = new User({ username, useremail, userrole, comments });
     const savedUser = await newUser.save();
@@ -67,7 +61,7 @@ app.post("/users", async (req, res) => {
     console.log("User saved:", savedUser); // Log saved user for debugging
   } catch (err) {
     console.error("Error saving user:", err);
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message }); // Changed to 500 to reflect server error
   }
 });
 
