@@ -11,10 +11,10 @@ const uri = process.env.MONGODB_URI;
 // Define the user schema and model
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
+  useremail: { type: String, required: true, unique: true },
   comments: { type: String },
-  role: { type: String, required: true }
+  userrole: { type: String, required: true }
 });
 
 const User = model("User", userSchema, "users");
@@ -46,9 +46,9 @@ app.get("/users", async (req, res) => {
 });
 
 app.post("/users", async (req, res) => {
-  const { name, email, role, comments } = req.body;
+  const { username, useremail, userrole, comments } = req.body;
   try {
-    const newUser = new User({ name, email, role, comments });
+    const newUser = new User({ username, useremail, userrole, comments });
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);
     console.log(savedUser)
