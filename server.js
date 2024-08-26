@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { v4: uuidv4 } = require('uuid');
 const mongoose = require("mongoose");
 require('dotenv').config(); // Load environment variables
 
@@ -11,6 +12,7 @@ const uri = process.env.MONGODB_URI;
 // Define the user schema and model
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
+  id: { type: String, default: uuidv4 },
   username: { type: String },
   useremail: { type: String },
   comments: { type: String },
