@@ -13,10 +13,10 @@ const uri = process.env.MONGODB_URI;
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
   id: { type: String, default: uuidv4 },
-  username: { type: String },
-  useremail: { type: String },
+  username: { type: String, required: true },
+  useremail: { type: String, required: true, unique: true },
   comments: { type: String },
-  userrole: { type: String }
+  userrole: { type: String, required: true }
 });
 
 const User = model("User", userSchema, "users");
@@ -26,9 +26,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB Atlas
-mongoose.connect(uri)
-  .then(() => console.log("Connected to MongoDB Atlas"))
+// Connect to MongoDB Atlas with connection pooling for serverless environments
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000 // Keep trying to send operations for 5 seconds
+}).then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
 
 // Routes
@@ -63,14 +66,28 @@ app.post("/users", async (req, res) => {
     console.log("User saved:", savedUser); // Log saved user for debugging
   } catch (err) {
     console.error("Error saving user:", err);
-    res.status(500).json({ message: err.message }); // Changed to 500 to reflect server error
+    
+    // Check for duplicate key error
+    if (err.code === 11000) {
+      res.status(409).json({ message: "Duplicate key error: This email is already registered." });
+    } else {
+      res.status(500).json({ message: err.message });
+    }
   }
 });
 
 // Export the Express app as a Vercel serverless function
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   if (mongoose.connection.readyState === 0) {
-    mongoose.connect(uri);
+    try {
+      await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      });
+    } catch (err) {
+      console.error("Failed to connect to MongoDB Atlas", err);
+      return res.status(500).json({ message: "Database connection error" });
+    }
   }
   return app(req, res);
 };
