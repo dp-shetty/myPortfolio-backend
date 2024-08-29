@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
 require('dotenv').config(); // Load environment variables
 
 const app = express();
@@ -12,7 +13,7 @@ const uri = process.env.MONGODB_URI;
 const { Schema, model } = mongoose;
 const userSchema = new Schema({
   username: { type: String },
-  useremail: { type: String ,unique:true},
+  useremail: { type: String, unique: true },
   comments: { type: String },
   userrole: { type: String }
 }, { versionKey: false });
@@ -28,6 +29,33 @@ app.use(express.urlencoded({ extended: true }));
 mongoose.connect(uri)
   .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
+
+// Create a transporter for nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // or any other email service
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// Function to send email
+const sendEmailNotification = (username, useremail) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: process.env.NOTIFICATION_EMAIL,
+    subject: 'New User Form Submission',
+    text: `New user form submitted by ${username} (${useremail}).`
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
+};
 
 // Routes
 app.get("/", (req, res) => {
@@ -47,7 +75,7 @@ app.get("/users", async (req, res) => {
 app.post("/users", async (req, res) => {
   const { username, useremail, userrole, comments } = req.body;
   console.log("Received data:", req.body); // Log received data for debugging
-  
+
   // Validate input
   if (!username || !useremail || !userrole) {
     return res.status(400).json({ message: "Username, email, and role are required." });
@@ -57,11 +85,12 @@ app.post("/users", async (req, res) => {
     // Create a new user and save to database
     const newUser = new User({ username, useremail, userrole, comments });
     const savedUser = await newUser.save();
+    sendEmailNotification(username, useremail); // Send email notification
     res.status(201).json(savedUser);
     console.log("User saved:", savedUser); // Log saved user for debugging
   } catch (err) {
     console.error("Error saving user:", err);
-    res.status(500).json({ message: err.message }); // Changed to 500 to reflect server error
+    res.status(500).json({ message: err.message });
   }
 });
 
